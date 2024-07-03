@@ -3,8 +3,7 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-LV project to get macro and industry data from Bcentral API and from CMF chile
-
+PDF tool to extract tables 
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -17,7 +16,7 @@ To set up the project environment, create a Conda environment using the provided
 
 ```bash
 conda env create -f environment.yml
-conda activate lv_project
+conda activate pdf_parser
 ```
 
 ### Setup
