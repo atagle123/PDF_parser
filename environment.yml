@@ -1,0 +1,13 @@
+name: lv_project
+
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - urllib3==1.26.6
+  - selenium==3.141.0
+  - pip:
+    - arelle-release
+    - camelot
