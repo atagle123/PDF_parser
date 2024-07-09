@@ -4,156 +4,157 @@ from thefuzz import fuzz
 import datetime
 import re
 from pdfquery import PDFQuery
-
-
-def extract_titles_and_tables(pdf_file):
-    tables_with_titles = []
-
-    # Extract tables from each page using Camelot
-    tables = camelot.read_pdf(pdf_file,flavor='stream',pages="all",row_tol=10, strip_text='\n',edge_tol=500,column_tol=5)
-
-    # Open the PDF document with PyMuPDF
-    doc = fitz.open(pdf_file)
-    date_patterns = [
-        r'\d{1,2}/\d{1,2}/\d{4}',                    # 01/31/2023
-        r'\d{1,2}-\d{1,2}-\d{4}',                    # 01-31-2023
-        r'\d{4}-\d{2}-\d{2}',                        # 2023-01-31
-        r'\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}',  # 31 Jan 2023
-        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s+\d{4}',  # Jan 31, 2023
-    ]
-
-    # Compile regex patterns
-    regex = re.compile('|'.join(date_patterns))
-
-    for table in tables:
-        # Extract text from the page for title extraction
-        page_num = table.page - 1  # Page numbers in Camelot are 1-based
-
-        """  # Load the page using PyMuPDF
-        page = doc.load_page(page_num)
-
-        # Extracting text from the current page
-        text = page.get_text(sort=True,flags=2) #option="blocks"(option="blocks",flags=2)
-    
-        # Close the document
-        matches = regex.findall(text)
-        date_results = []
-
-        for match in matches:
-            try:
-                # Validate the matched date using datetime.strptime
-               # date_obj = datetime.strptime(match, '%m/%d/%Y')  # Adjust format string as needed
-                date_results.append((page_num + 1, match))  # Store page number and date string
-            except ValueError:
-                continue  # Skip if date format does not match"""
-    
-
-        # Extract title for the current table
-        title = extract_title_above_table(page_num, table)
-        tables_with_titles.append((title, table.df))
-    doc.close()
-    return tables_with_titles
-
-
-def extract_title_above_table(page_num, table):
-    top_ypos_table=table.rows[0][0]
-    x_pos_table_min=table.cols[0][0]
-    x_pos_table_max=table.cols[-1][-1]
-
-    pdf = PDFQuery(pdf_file)
-    pdf.load(page_num)
-
-
-    # Use CSS-like selectors to locate the elements
-    for i in range(100):
-        text_elements = pdf.pq('LTTextLineHorizontal:overlaps_bbox("%s, %s, %s, %s")' % (x_pos_table_min, top_ypos_table, x_pos_table_max, top_ypos_table+i)).text()
-        if len(text_elements)!=0 :
-            break
-    
-    date_patterns = [
-        r'\d{1,2}/\d{1,2}/\d{4}',                    # 01/31/2023
-        r'\d{1,2}-\d{1,2}-\d{4}',                    # 01-31-2023
-        r'\d{4}-\d{2}-\d{2}',                        # 2023-01-31
-        r'\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}',  # 31 Jan 2023
-        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s+\d{4}',  # Jan 31, 2023
-    ]
-
-    # Compile regex patterns
-    regex = re.compile('|'.join(date_patterns))
-    matches = regex.findall(text_elements)
-    date_results = []
-    print(matches)
-    for match in matches:
-        try:
-            # Validate the matched date using datetime.strptime
-            # date_obj = datetime.strptime(match, '%m/%d/%Y')  # Adjust format string as needed
-            date_results.append((page_num + 1, match))  # Store page number and date string
-        except ValueError:
-            continue  # Skip if date format does not match"""
-
-
-    return(text_elements)
-
-
-
-
-
-
-def extract_text_chunks(filename):
-    doc = fitz.open(filename)
-    chunks = []
-    
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        blocks = page.get_text("dict")["blocks"]
-        
-        for block in blocks:
-            if block["type"] == 0:  # Text block
-                chunks.append(block["lines"][0]["spans"][0]["text"])
-    
-    return chunks
-
-
-
-
-
-
-# Example usage:
-pdf_file = "Estados_financieros_2010_03-páginas.pdf"
-list=tables_with_titles = extract_titles_and_tables(pdf_file)
-
 #from tabula import read_pdf
 from camelot import read_pdf
 import pandas as pd
 import os
 
-class BasePDFclass:
-    def __init__(self,pdf_path):
-        self.pdf_path = pdf_path
-    
-    def extract_tables(self):
-        """ Método a implementar que entregue todas las tablas en formato de una ista de dataframes
-        """
-        raise NotImplementedError
 
-class Image_PDF_extractor():
+class Image_PDF_extractor:
     def __init__(self):
         pass
 
     def exctract_tables(self):
+        raise NotImplementedError
+
+
+
+class Text_PDF_extractor:
+    def __init__(self,pdf_path,save_path): # implement save path 
+        self.pdf_path=pdf_path
+        current_dir = os.getcwd()
+        self.csv_path=os.path.join(current_dir, "data","csv")
+        self.excel_path=os.path.join(current_dir, "data","excel")
         pass
 
-
-
-class Text_PDF_extractor():
-    def __init__(self):
-        pass
     def extract_tables(self,pdf_path,pages="all"):
-        df = read_pdf(pdf_path,pages=pages)
-        return(df)
+        table_list = read_pdf(pdf_path,pages=pages) #,flavor='stream',pages="all",row_tol=5, strip_text='\n',edge_tol=10000,column_tol=0)#,layout_kwargs={"boxes_flow":1})
+        self.table_list=table_list._tables # list of camelot tables object to acces a table is table_list[number].df
+        print(f"Extracted {len(table_list._tables)} tables")
+
+        return(self.table_list)
+    
+
+    def visualize_tables(self,table_num):
+        return(camelot.plot(self.table_list[table_num], kind='contour').show()) #write others kind of visualizations
+
+    def filter_by_accuracy(self,acc=88):#'accuracy': 99.99999999999999, acc bewtween 0 and 100#'whitespace': 0.0,
+       # for table in self.table_list
+        raise NotImplementedError
 
 
-class PDF_tables(BasePDFclass):
+    def save_tables_to_excel(self,filename):
+
+        os.makedirs(self.excel_path, exist_ok=True)
+        filepath=os.path.join(self.excel_path, f"{filename}.xlsx")
+
+        with pd.ExcelWriter(filepath) as writer:
+            # Iterate over the dictionary and write each DataFrame to a separate Excel sheet
+            for i,table in enumerate(self.table_list):
+                df=table.df
+                   # df.columns = pd.to_datetime(df.columns.map(self.parse_quarter))
+                   # add page number to title 
+                df.to_excel(writer, sheet_name=f"Table {i}")
+        print("Downloaded tables to excel")
+
+
+
+class PDF_num_table(Text_PDF_extractor):
+    """ Class that extract and preprocess pdf tables, assuming that the indexes are strings, the columns are dates, and the values are numbers
+    
+    """
+    
+    def __init__(self, pdf_path):
+        super().__init__(pdf_path)
+        pass
+
+    
+    def clean_bullets(self,df_list,function=None): # usar self df list quizas
+        "quizas implementar funciones propias por empresa..."
+
+        for i,df in enumerate(df_list):
+
+            df = df.apply(lambda x: x.astype(str).str.replace('.', ''))
+            df = df.apply(lambda x: x.astype(str).str.replace('(', ''))
+            df = df.apply(lambda x: x.astype(str).str.replace(')', ''))
+            df = df.apply(lambda x: x.astype(str).str.replace('_', ''))
+            df = df.apply(lambda x: x.astype(str).str.replace('-', ''))
+            df.dropna(how="all",inplace=True)
+            df = df.map(lambda x: x.lower() if isinstance(x, str) else x)
+            df_list[i]=df
+
+        return(df_list)
+    
+    
+    def separate_tables(self):
+        """
+        if the values of the table should be all numeric separate tables that contains a column of strings (this column its assumed to be another index) (assumes there are two tables in one)
+        """
+        raise NotImplementedError
+
+
+    def create_indexes():
+        pass
+
+    def extract_dates_above_table(self,table): # camelot table object
+        page_num = table.page - 1 # Page numbers in Camelot are 1-based 
+        top_ypos_table=table.rows[0][0]
+        x_pos_table_min=table.cols[0][0]
+        x_pos_table_max=table.cols[-1][-1]
+
+        pdf = PDFQuery(self.pdf_path)
+        pdf.load(page_num)
+
+
+        # Use CSS-like selectors to locate the elements
+        for i in range(100):
+            text_elements = pdf.pq('LTTextLineHorizontal:overlaps_bbox("%s, %s, %s, %s")' % (x_pos_table_min, top_ypos_table, x_pos_table_max, top_ypos_table+i)).text()
+            if len(text_elements)!=0 : # breaks when finds the first text elements above the table
+                break
+        
+        date_patterns = [
+            r'\d{1,2}/\d{1,2}/\d{4}',                    # 01/31/2023
+            r'\d{1,2}-\d{1,2}-\d{4}',                    # 01-31-2023
+            r'\d{4}-\d{2}-\d{2}',                        # 2023-01-31
+            r'\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}',  # 31 Jan 2023
+            r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s+\d{4}',  # Jan 31, 2023
+        ]
+
+        # Compile regex patterns
+        regex = re.compile('|'.join(date_patterns))
+        matches = regex.findall(text_elements) # find the matches 
+
+        return(matches)
+         
+        """date_results = []
+ 
+        for match in matches:
+            try:
+                # Validate the matched date using datetime.strptime
+                # date_obj = datetime.strptime(match, '%m/%d/%Y')  # Adjust format string as needed
+                date_results.append((page_num + 1, match))  # Store page number and date string
+            except ValueError:
+                continue  # Skip if date format does not match"""
+
+    def main_preprocessing_tables(self):
+        """ Function that does the following steps:
+            maybe filter by accuracy
+            1. Separate tables
+            2. clean bullets
+            3. clean nans and join indexes and order rows and columns
+            4. set indexes
+            5. if the column header is not a date find the dates and put them as column names (the proviousley should be passed to a dataframe row)
+            6. pass the numbers to a numeric dtype
+        """
+        raise NotImplementedError
+
+
+
+
+
+
+
+class PDF_tables(Text_PDF_extractor):
     """Class that exctract all the tables of the pdf"""
     
     def __init__(self, pdf_path):
@@ -195,33 +196,18 @@ class PDF_tables(BasePDFclass):
                 match_list.append(df)
         return(match_list)
     
-    def preprocess_data(self,df_list,function=None):
-        "quizas implementar funciones propias por empresa..."
 
-        for i,df in enumerate(df_list):
 
-            df = df.apply(lambda x: x.astype(str).str.replace('.', ''))
-            df = df.apply(lambda x: x.astype(str).str.replace('(', ''))
-            df = df.apply(lambda x: x.astype(str).str.replace(')', ''))
-            df = df.apply(lambda x: x.astype(str).str.replace('_', ''))
-            df = df.apply(lambda x: x.astype(str).str.replace('-', ''))
-            df.dropna(how="all",inplace=True)
-            df = df.map(lambda x: x.lower() if isinstance(x, str) else x)
-            df_list[i]=df
-
-        return(df_list)
+def extract_text_chunks(filename):
+    doc = fitz.open(filename)
+    chunks = []
     
-    def tables_to_excel(self,filename,concept=None):
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        blocks = page.get_text("dict")["blocks"]
         
-        match_list=self.search_concept(concept)
-        df_preprocess_list=self.preprocess_data(match_list)
-        print(len(df_preprocess_list))
-        filepath=os.path.join(self.excel_path, f"{filename}.xlsx")
-
-        with pd.ExcelWriter(filepath) as writer:
-            for  i,df in enumerate(df_preprocess_list):
-                df.to_excel(writer,sheet_name=f"sheetname_{i}")
-        pass
+        for block in blocks:
+            if block["type"] == 0:  # Text block
+                chunks.append(block["lines"][0]["spans"][0]["text"])
     
-    def download_table(self,path,table_name): # ver como seleccionar una tabla para descargar... 
-        raise NotImplementedError
+    return chunks
