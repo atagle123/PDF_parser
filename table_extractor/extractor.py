@@ -373,6 +373,8 @@ def extract_text_chunks(filename):
 
 if __name__=="__main__":
     pdf_path="Estados_financieros_2010_03-páginas.pdf"
+    pdf_path="IFS 1Q24.pdf"
+
     pdf_instance=PDF_num_table(pdf_path)
     tables=pdf_instance.extract_tables(pages="3")
     new_tables=pdf_instance.main_preprocessing_tables()
