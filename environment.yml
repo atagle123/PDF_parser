@@ -9,6 +9,7 @@ dependencies:
   - pandas
   - pip:
     - camelot-py==0.11.0
+    - opencv-python=4.10.0.84
     - pymupdf==1.24.5
     - thefuzz==0.22.1
     - pdfquery==0.4.3
