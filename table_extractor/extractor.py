@@ -283,7 +283,7 @@ class PDF_num_table(Text_PDF_extractor):
           #  non_empty_non_space_count = len([s for s in text_elements if pattern.search(s)])
 
 
-        return(None)
+        return([])
 
     def main_preprocessing_tables(self):
         """ Function that does the following steps:
