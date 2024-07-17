@@ -20,7 +20,6 @@ class Image_PDF_extractor:
         raise NotImplementedError
 
 
-
 class Text_PDF_extractor:
     def __init__(self,pdf_path,save_path=None): # implement save path 
         self.pdf_path=pdf_path
@@ -70,72 +69,61 @@ class PDF_num_table(Text_PDF_extractor):
         super().__init__(pdf_path)
         pass
 
-    
-    def string_to_number(self,):
+    def iterate_over_table_list(self,table_list,function):
 
-
-        for i,df in enumerate(self.table_list):
-
+        for i,df in enumerate(table_list):
             df_old=df.df.copy()
-            df_old = df_old.apply(pd.to_numeric, errors='ignore')
-            ### clean reminiding stuff
-           # df_old = df_old.apply(lambda x: x.astype(str).str.replace('_', ''))
-            df_old=pd.to_numeric(df_old)
-            #df_old = df_old.apply(lambda x: x.astype(str).str.replace('-', ''))
-            df.df=df_old
+            df_new=function(df_old) # quizas en vex de una funcion usar una lista de funciones
+            df.df=df_new
 
-        return(self.table_list)
+        return(table_list) # revisar que se haga el cambio...
+
+
+    def string_to_number(self,df):
+
+        df = df.apply(pd.to_numeric, errors='ignore')
+        ### clean reminiding stuff
+        # df_old = df_old.apply(lambda x: x.astype(str).str.replace('_', ''))
+        df=pd.to_numeric(df)
+
+
+        return(df)
 
     
-    def clean_bullets(self,function=None): # usar self df list quizas
+    def clean_bullets(self,df,function=None): # usar self df list quizas
         "quizas implementar funciones propias por empresa..."
 
-        for i,df in enumerate(self.table_list):
-            df_old=df.df.copy()
-          #  df_old = df_old.apply(lambda x: x.astype(str).str.replace('.', ''))
-            df_old = df_old.apply(lambda x: x.astype(str).str.replace('(', ''))
-            df_old = df_old.apply(lambda x: x.astype(str).str.replace(')', ''))
-         #   df_old = df_old.apply(lambda x: x.astype(str).str.replace(',', ''))
-            df_old = df_old.apply(lambda x: x.astype(str).str.replace('_', ''))
-           # df_old = df_old.apply(lambda x: x.astype(str).str.replace('-', ''))
-            df_old = df_old.map(lambda x: x.lower() if isinstance(x, str) else x)
-            
-            df.df=df_old
+        #  df_old = df_old.apply(lambda x: x.astype(str).str.replace('.', ''))
+        df = df.apply(lambda x: x.astype(str).str.replace('(', ''))
+        df = df.apply(lambda x: x.astype(str).str.replace(')', ''))
+        #   df_old = df_old.apply(lambda x: x.astype(str).str.replace(',', ''))
+        df = df.apply(lambda x: x.astype(str).str.replace('_', ''))
+        # df_old = df_old.apply(lambda x: x.astype(str).str.replace('-', ''))
+        df = df.map(lambda x: x.lower() if isinstance(x, str) else x)
 
-        return(self.table_list)
+        return(df)
     
-    def clean_str_cols(self):
+    def clean_str_cols(self,df):
 
-        for i,df in enumerate(self.table_list):
-            
-            df_old=df.df.copy()
-            dtypes_dict=identify_columns_types(df_old)
+        dtypes_dict=identify_columns_types(df)
 
-            for key,values in dtypes_dict.items():
+        for key,values in dtypes_dict.items():
+            if values=="str":
+                df[key] = df[key].apply(lambda x: str(x).replace(',', ''))
+                df[key] = df[key].apply(lambda x: str(x).replace('.', ''))
+                df[key] =  df[key].apply(lambda x: str(x).replace('-', ''))
 
-                if values=="str":
-                    df_old[key] = df_old[key].apply(lambda x: str(x).replace(',', ''))
-                    df_old[key] = df_old[key].apply(lambda x: str(x).replace('.', ''))
-                    df_old[key] =  df_old[key].apply(lambda x: str(x).replace('-', ''))
-
-            
-            df.df=df_old
-
-        return(self.table_list)
+        return(df)
 
     
-    def dropnan(self):
-        for i,df in enumerate(self.table_list):
-            df_old=df.df.copy()
+    def dropnan(self,df):
 
-            df_old.replace(r'^\s*$', np.nan, regex=True, inplace=True)
+        df.replace(r'^\s*$', np.nan, regex=True, inplace=True)
+        df.dropna(how="all",inplace=True,axis=1)
+        df.dropna(how="all",inplace=True,axis=0)
+        df.replace(np.nan,"", regex=True, inplace=True)
 
-            df_old.dropna(how="all",inplace=True,axis=1)
-            df_old.dropna(how="all",inplace=True,axis=0)
-            df_old.replace(np.nan,"", regex=True, inplace=True)
-            df.df=df_old
-
-        return(self.table_list)
+        return(df)
     
     def separate_tables(self):
         """
@@ -182,59 +170,39 @@ class PDF_num_table(Text_PDF_extractor):
         return([df])
 
 
-    def delete_no_type_cols(self):
+    def delete_no_type_cols(self,df):
         """
         if the values of the table should be all numeric separate tables that contains a column of strings (this column its assumed to be another index) (assumes there are two tables in one)
         """
-        for i,df in enumerate(self.table_list):
+        dtypes_dict=identify_columns_types(df)
 
-            df_old=df.df.copy()
-
-            dtypes_dict=identify_columns_types(df_old)
-
-            for key,values in dtypes_dict.items():
-
-                if values==None:
-                    df_old = df_old.drop(key, axis=1)
-                    
-            df.df=df_old
-
-        return(self.table_list)
+        for key,values in dtypes_dict.items():
+            if values==None:
+                df = df.drop(key, axis=1)
+        return(df)
         
-    def set_zeros(self):
-        for i,df in enumerate(self.table_list):
+    def set_zeros(self,df):
 
-            df_old=df.df.copy()
-            for idx, (index, row) in enumerate(df_old.iterrows()):
-                if index != "":
-                    for col in df_old.columns:
-                        if row[col]=="":
-                            df_old.at[index, col] = 0
-            df.df=df_old
+        for idx, (index, row) in enumerate(df.iterrows()):
+            if index != "":
+                for col in df.columns:
+                    if row[col]=="":
+                        df.at[index, col] = 0
 
-        return(self.table_list)
+        return(df)
     
-    def create_indexes(self):
-        for i,df in enumerate(self.table_list):
+    def create_indexes(self,df):
 
-            df_old=df.df.copy()
+        dtypes_dict=identify_columns_types(df)
+        first_item=next(iter(dtypes_dict.items()))
+        first_col=first_item[1]
 
-            dtypes_dict=identify_columns_types(df_old)
+        if first_col=="str":
+            col_name=first_item[0]
+            df=df.set_index(col_name)
 
-            first_item=next(iter(dtypes_dict.items()))
-
-            first_col=first_item[1]
-
-            if first_col=="str":
-                
-                col_name=first_item[0]
-                df_old=df_old.set_index(col_name)
-                    
-            df.df=df_old
-
-        return(self.table_list)
+        return(df)
     
-
 
     def set_headers_to_tables(self):
         # asume que camelot nunca pone columns headers y indices 
@@ -300,15 +268,15 @@ class PDF_num_table(Text_PDF_extractor):
             7. see index and set  or cols header if none find date, if date do none, if other bajar as column
             8.   
         """
-        self.clean_bullets()
-        self.clean_str_cols()
-        self.delete_no_type_cols()
+        self.table_list=self.iterate_over_table_list(self.table_list,self.clean_bullets)
+        self.table_list=self.iterate_over_table_list(self.table_list,self.clean_str_cols)
+        self.table_list=self.iterate_over_table_list(self.table_list,self.delete_no_type_cols)
         self.separate_tables()
        # self.string_to_number()
-        self.dropnan()
-        self.create_indexes()
-        self.set_zeros()
-        self.dropnan() # in the number types change to 0... 
+        self.table_list=self.iterate_over_table_list(self.table_list,self.dropnan)
+        self.table_list=self.iterate_over_table_list(self.table_list,self.create_indexes)
+        self.table_list=self.iterate_over_table_list(self.table_list,self.set_zeros)
+        self.table_list=self.iterate_over_table_list(self.table_list,self.dropnan) # in the number types change to 0... 
         # aca falta join indexes...
         self.set_headers_to_tables()
         return(self.table_list)
@@ -376,6 +344,6 @@ if __name__=="__main__":
     pdf_path="IFS 1Q24.pdf"
 
     pdf_instance=PDF_num_table(pdf_path)
-    tables=pdf_instance.extract_tables(pages="3")
+    tables=pdf_instance.extract_tables(pages="3") # usar variables: path, pages, stream ,flavor='stream',row_tol=5, strip_text='\n',edge_tol=10000,column_tol=0) y variable separador
     new_tables=pdf_instance.main_preprocessing_tables()
     pdf_instance.save_tables_to_excel(filename="excel_test")
