@@ -1,5 +1,6 @@
 /ignore
 /data
+/test.py
 /to_do_list.txt
 /drivers
 *.ipynb
