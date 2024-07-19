@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from table_extractor.extractor import PDF_num_table
 
 
@@ -17,7 +18,7 @@ def main(pdf_path,pages):
 
 if __name__=="__main__":
     pdf_path="Estados_financieros_2010_03-páginas.pdf"
-    pdf_path="ver_filial.pdf"
+    pdf_path="IFS 1Q24.pdf"
     pages="3"
 
-    main(pdf_path=pdf_path,pages=pages)
+    main(pdf_path=pdf_path)
