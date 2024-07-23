@@ -1,7 +1,6 @@
 import camelot
 import fitz  # PyMuPDF
 from thefuzz import fuzz
-import datetime
 import re
 from pdfquery import PDFQuery
 #from tabula import read_pdf
