@@ -28,8 +28,8 @@ class Text_PDF_extractor:
         self.excel_path=os.path.join(current_dir, "data","excel")
         pass
 
-    def extract_tables(self,pages="all"):
-        table_list = read_pdf(self.pdf_path,pages=pages,flavor='stream',row_tol=5, strip_text='\n',edge_tol=10000,column_tol=0)#,layout_kwargs={"boxes_flow":1})
+    def extract_tables(self,pages="all",flavor="stream",row_tol=5,edge_tol=10000,column_tol=0, strip_text='\n'):
+        table_list = read_pdf(self.pdf_path,pages=pages,flavor=flavor,row_tol=row_tol, strip_text=strip_text,edge_tol=edge_tol,column_tol=column_tol)#,layout_kwargs={"boxes_flow":1})
         self.table_list=table_list._tables # list of camelot tables object to acces a table is table_list[number].df
         print(f"Extracted {len(table_list._tables)} tables")
 
@@ -241,8 +241,8 @@ class PDF_num_table(Text_PDF_extractor):
         # Compile regex patterns
         regex = re.compile('|'.join(date_patterns))
         # Use CSS-like selectors to locate the elements
-        for i in range(500):
-            text_elements = pdf.pq('LTTextLineHorizontal:overlaps_bbox("%s, %s, %s, %s")' % (x_pos_table_min, top_ypos_table, x_pos_table_max, top_ypos_table+i)).text()
+        for i in range(100):
+            text_elements = pdf.pq('LTTextLineHorizontal:overlaps_bbox("%s, %s, %s, %s")' % (x_pos_table_min, top_ypos_table, x_pos_table_max, top_ypos_table+i*3)).text()
            # pattern = re.compile(r'\S')
             matches = regex.findall(text_elements) # find the matches 
             if len(matches)!=0:
