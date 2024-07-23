@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog
 from table_extractor.extractor import PDF_num_table
 
 
@@ -12,6 +12,9 @@ class PDFTableExtractorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("PDF Table Extractor")
+
+        #self.root.geometry('290x162')
+
         self.create_widgets()
 
     def create_widgets(self):
@@ -25,7 +28,6 @@ class PDFTableExtractorApp:
         self.start_page_entry = tk.Entry(self.root)
         self.start_page_entry.pack(pady=5)
         
-
         self.pdf_type = tk.Label(root, text="flavor:")
         self.pdf_type.pack(pady=5)
         self.pdf_type_entry = tk.Entry(root)
@@ -52,6 +54,7 @@ class PDFTableExtractorApp:
 
         self.extract = tk.Button(self.root, text="Extract PDF", command=self.main)
         self.extract.pack(pady=5)
+        self.extract.config(state="disabled")
         
         # Create an exit button
         self.exit_button = tk.Button(self.root, text="Exit", command=self.root.quit)
@@ -73,6 +76,7 @@ class PDFTableExtractorApp:
         file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
         if file_path:
             self.file_path=file_path
+            self.extract.config(state="normal")
     
     def save_file(self):
         directory_path = filedialog.askdirectory(
@@ -80,7 +84,7 @@ class PDFTableExtractorApp:
         )
 
         if directory_path:
-            self.file_path=directory_path
+            self.save_path=directory_path
 
 
     def main(self):
@@ -93,14 +97,17 @@ class PDFTableExtractorApp:
             
             self.save_file()
 
-            if self.file_path:
-                pdf_instance.excel_path=self.file_path
-            
-            pdf_instance.save_tables_to_excel(filename="pdf_tables")
+            if self.save_path:
+                pdf_instance.excel_path=self.save_path
+            filename=self.make_filename()
+            pdf_instance.save_tables_to_excel(filename=filename)
         else:
             raise FileNotFoundError
 
-
+    def make_filename(self):
+        filename=os.path.basename(self.file_path)
+        pages=self.kwargs["pages"]
+        return(f"pdf_tables_{filename}_{pages}")
 
 # Main application
 if __name__ == "__main__":
