@@ -16,8 +16,7 @@ def main(pdf_path,pages):
 
 
 if __name__=="__main__":
-    pdf_path="Estados_financieros_2010_03-páginas.pdf"
-    pdf_path="ver_filial.pdf"
+    pdf_path="data\excel\pdf\Estados_financieros_2010_03-páginas.pdf"
     pages="3"
 
     main(pdf_path=pdf_path,pages=pages)
